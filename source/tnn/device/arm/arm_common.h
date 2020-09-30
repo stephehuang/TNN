@@ -47,12 +47,21 @@
 #else
 #define VQMOVN_HIGH_S32_T(lows16, highs32) vcombine_s16((lows16), vqmovn_s32(highs32))
 #define VMOVL_HIGH_S16_T(a) vmovl_s16(vget_high_s16(a))
-// trick convert for float, only accurate when abs(a) < 1.5 * 2^22, assume ok
-const float32x4_t kNeonClampNumberf = vdupq_n_f32(12582912.0f);
-const int32x4_t kNeonClampNumberi   = vdupq_n_s32(0x4B400000);
-#define VCVTAQ_S32_F32(a) (vsubq_s32(vreinterpretq_s32_f32(vaddq_f32(a, kNeonClampNumberf)), kNeonClampNumberi))
 
-#define VPADDQ_S32(a, b)                                                                                               \
+// fp32 round to nearest
+
+// method1: trick convert for float, only accurate when abs(a) < 1.5 * 2^22, (problematic when fractional part is exactly 0.5)
+// const float32x4_t kNeonClampNumberf = vdupq_n_f32(12582912.0f);
+// const int32x4_t kNeonClampNumberi   = vdupq_n_s32(0x4B400000);
+// #define VCVTAQ_S32_F32(a) (vsubq_s32(vreinterpretq_s32_f32(vaddq_f32(a, kNeonClampNumberf)), kNeonClampNumberi))
+
+// method2: follow definition
+const int32x4_t kNeonSigni = vdupq_n_s32(1 << 31);
+const int32x4_t kNeon05i   = vreinterpretq_s32_f32(vdupq_n_f32(0.5f));
+#define VCVTAQ_S32_F32(a)                                                                                               \
+    vcvtq_s32_f32(vaddq_f32(a, vreinterpretq_f32_s32(vorrq_s32(kNeon05i, vandq_s32(kNeonSigni, vreinterpretq_s32_f32(a))))))
+
+#define VPADDQ_S32(a, b)                                                                                                \
     vcombine_s32(vpadd_s32(vget_low_s32(a), vget_high_s32(a)), vpadd_s32(vget_low_s32(b), vget_high_s32(b)))
 
 #endif

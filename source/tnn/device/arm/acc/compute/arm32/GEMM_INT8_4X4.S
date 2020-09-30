@@ -157,27 +157,50 @@ LoopEnd:
     vmul.f32 q4,  q2, q15
     vmul.f32 q5,  q3, q15
 
-    //f32 --> s8
-    // trick: magic num 12582912.0f
-    ldr r0, .L4
-    vdup.32 q7, r0
-    vadd.f32 q12, q12, q7
+    // f32 round to nearest
+    // method1: trick magic num 12582912.0f (problematic when fractional part is exactly 0.5)
+    @ ldr r0, .L4
+    @ vdup.32 q7, r0
+    @ vadd.f32 q12, q12, q7
+    @ vadd.f32 q13, q13, q7
+    @ vadd.f32 q4,  q4,  q7
+    @ vadd.f32 q5,  q5,  q7
+
+    @ vsub.s32 q12, q12, q7
+    @ vsub.s32 q13, q13, q7
+    @ vsub.s32 q4,  q4,  q7
+    @ vsub.s32 q5,  q5,  q7
+
+    // method2: follow definition
+    vmov.i32 q0, #0x80000000
+    vand.32  q6, q12, q0
+    vand.32  q7, q13, q0
+    vand.32  q8, q4, q0
+    vand.32  q9, q5, q0
+
+    vorr.i32 q6, #0x3F000000
+    vorr.i32 q7, #0x3F000000
+    vorr.i32 q8, #0x3F000000
+    vorr.i32 q9, #0x3F000000
+
+    vadd.f32 q12, q12, q6
     vadd.f32 q13, q13, q7
-    vadd.f32 q4,  q4,  q7
-    vadd.f32 q5,  q5,  q7
+    vadd.f32 q4, q4, q8
+    vadd.f32 q5, q5, q9
 
-    vsub.s32 q12, q12, q7
-    vsub.s32 q13, q13, q7
-    vsub.s32 q4,  q4,  q7
-    vsub.s32 q5,  q5,  q7
+    vcvt.s32.f32 q12, q12
+    vcvt.s32.f32 q13, q13
+    vcvt.s32.f32 q4, q4
+    vcvt.s32.f32 q5, q5
 
+    //f32 --> s8
     vqmovn.s32 d0,q12
     vqmovn.s32 d1,q13
     vqmovn.s32 d2,q4
     vqmovn.s32 d3,q5
     vqmovn.s16 d4,q0
     vqmovn.s16 d6,q1
-    
+
     vst1.s32 d4[0], [dst], dst_depth
     vst1.s32 d4[1], [dst], dst_depth
     vst1.s32 d6[0], [dst], dst_depth
@@ -186,8 +209,8 @@ LoopEnd:
 vpop {q4-q7}
 pop {r4, r5, r6, r7, r8, pc}
 
-.L4:
-    .word 0x4B400000
+@ .L4:
+@     .word 0x4B400000
 
 #endif
 #endif
