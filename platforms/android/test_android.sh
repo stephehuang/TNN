@@ -7,7 +7,7 @@ TEST_PROTO_PATH=
 DEVICE="ARM"
 WARM_UP_COUNT=0
 ITERATOR_COUNT=1
-NEED_REBUILD=true
+NEED_REBUILD=false
 NEED_PUSH=true
 INPUT_PATH=
 
@@ -25,11 +25,14 @@ fi
 
 if $NEED_PUSH
 then
+    #adb push build64/libTNN.so ${ANDROID_DIR}/libTNN.so
+    #adb push build64/test/TNNTest ${ANDROID_DIR}/TNNTest
     adb push build32/libTNN.so ${ANDROID_DIR}/libTNN.so
     adb push build32/test/TNNTest ${ANDROID_DIR}/TNNTest
     if [ -z "$TEST_PROTO_PATH" ]
     then
-        TEST_PROTO_PATH=../../model/SqueezeNet/squeezenet_v1.1.tnnproto
+        #TEST_PROTO_PATH=../../model/SqueezeNet/squeezenet_v1.1.tnnproto
+        TEST_PROTO_PATH=./models/test.tnnproto
     fi
     if [ -n "$INPUT_PATH" ]
     then

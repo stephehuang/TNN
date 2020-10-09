@@ -1,0 +1,2 @@
+/Users/vincentment/Downloads/android-ndk-r21b/toolchains/llvm/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-ar qc libgflags_nothreads.a CMakeFiles/gflags_nothreads_static.dir/src/gflags.cc.o CMakeFiles/gflags_nothreads_static.dir/src/gflags_reporting.cc.o CMakeFiles/gflags_nothreads_static.dir/src/gflags_completions.cc.o
+/Users/vincentment/Downloads/android-ndk-r21b/toolchains/llvm/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-ranlib libgflags_nothreads.a
