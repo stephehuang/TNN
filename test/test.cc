@@ -355,6 +355,7 @@ namespace test {
             auto mat_type = mat->GetMatType();
  
             if (FLAGS_ip.empty()) {
+#if 0
                 for (int i = 0; i < data_count; i++) {
                     if (mat_type == NCHW_FLOAT) {
                         reinterpret_cast<float*>(mat_data)[i] = (float)(rand() % 256 - 128) / 128.0f;
@@ -362,6 +363,23 @@ namespace test {
                         reinterpret_cast<uint8_t*>(mat_data)[i] = (rand() % 256);
                     }
                 }
+#else
+                auto dims = mat->GetDims();
+                for (int n = 0; n < dims[0]; n++) {
+                    for (int c = 0; c < dims[1]; c++) {
+                        for (int h = 0; h < dims[2]; h++) {
+                            for (int w = 0; w < dims[3]; w++) {
+                                int pos = ((n * dims[1] + c) * dims[2] + h) * dims[3] + w;
+                                if (c == 0) {
+                                    reinterpret_cast<float*>(mat_data)[pos] = 1.0f;
+                                } else {
+                                    reinterpret_cast<float*>(mat_data)[pos] = 0.0f;
+                                }
+                            }
+                        }
+                    }
+                }
+#endif
             } else {
                 LOGD("input path: %s\n", FLAGS_ip.c_str());
                 std::ifstream input_stream(FLAGS_ip);
@@ -400,6 +418,10 @@ namespace test {
                 param.scale = std::vector<float>(dims[1], 1);
                 param.bias  = std::vector<float>(dims[1], 0);
             }
+            if (dims[1] == 3) {
+                param.scale = {1.0 / 256, 1.0 / 256, 1.0 / 256, 0.0};
+                param.bias = {-0.5, -0.5, -0.5, 0.0};
+            }
             param_map[name] = param;
         }
         return param_map;
@@ -411,16 +433,16 @@ namespace test {
         LOGD("the output path: %s\n", FLAGS_op.c_str());
         if (!FLAGS_fc) {
             LOGD("output path: %s\n", FLAGS_op.c_str());
-            f << outputs.size() << std::endl;
+            // f << outputs.size() << std::endl;
             for (auto output : outputs) {
-                f << output.first;
+                // f << output.first;
                 auto mat      = output.second;
                 DimsVector dims = mat->GetDims();
-                f << " " << dims.size();
+                // f << " " << dims.size();
                 for (auto dim : dims) {
-                    f << " " << dim;
+                    // f << " " << dim;
                 }
-                f << std::endl;
+                // f << std::endl;
             }
         } else {
             for (auto output : outputs) {
@@ -439,8 +461,19 @@ namespace test {
             auto mat  = output.second;
             int data_count     = DimsVectorUtils::Count(mat->GetDims());
             float* data = reinterpret_cast<float*>(mat->GetData());
-            for (int c = 0; c < data_count; ++c) {
-                f << std::fixed << std::setprecision(6) << data[c] << std::endl;
+            int out_channel = 4;
+            auto dims = mat->GetDims();
+            if (output.first == "stage1_L2_22kps") {
+                for (int n = 0; n < dims[0]; n++) {
+                    for (int c = out_channel; c < (out_channel + 1); c++) {
+                        for (int h = 0; h < dims[2]; h++) {
+                            for (int w = 0; w < dims[3]; w++) {
+                                int pos = ((n * dims[1] + c) * dims[2] + h) * dims[3] + w;
+                                f << std::fixed << std::setprecision(6) << data[pos] << std::endl;
+                            }
+                        }
+                    }
+                }
             }
         }
         f.close();
