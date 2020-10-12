@@ -12,7 +12,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-#include "tnn/optimizer/net_optimizer_insert_int8_reformat.h"
+#include "tnn/optimizer/net_optimizer_insert_reformat.h"
 
 #include <algorithm>
 #include <map>
@@ -70,8 +70,10 @@ namespace optimizer {
         }
 
         // only insert reformat before quantized layer now
-        auto is_quantized_net = GetQuantizedInfoFromNetStructure(structure);
-        if (!is_quantized_net) {
+        auto quantize_layer = std::find_if(layers_orig.begin(), layers_orig.end(), [](std::shared_ptr<LayerInfo> iter) {
+            return iter->param->quantized == true;
+        });
+        if (quantize_layer == layers_orig.end()) {
             return TNN_OK;
         }
 
@@ -80,6 +82,9 @@ namespace optimizer {
         for (int index = 0; index < count; index++) {
             auto cur_layer = layers_orig[index];
             layers_fused.push_back(cur_layer);
+            if (cur_layer->type == LAYER_REFORMAT) {
+                continue;
+            }
 
             // find blobs need reformat
             // support multi inputs/outputs
@@ -89,6 +94,9 @@ namespace optimizer {
                 bool need_reformat = false;
                 for (int next_id = index + 1; next_id < count; next_id++) {
                     auto next_layer = layers_orig[next_id];
+                    if (next_layer->type == LAYER_REFORMAT) {
+                        continue;
+                    }
                     for (auto next_in : next_layer->inputs) {
                         if (next_in == cur_out && next_layer->param->quantized != cur_layer->param->quantized) {
                             if (cur_layer->type == LAYER_REFORMAT || next_layer->type == LAYER_REFORMAT) {
