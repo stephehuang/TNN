@@ -12,7 +12,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-#include "tnn/optimizer/net_optimizer_insert_reformat.h"
+#include "tnn/optimizer/net_optimizer_insert_int8_reformat.h"
 
 #include <algorithm>
 #include <map>
@@ -45,7 +45,7 @@ namespace optimizer {
     static std::shared_ptr<LayerInfo> CreateReformat(std::string name, bool src_quantized) {
         std::shared_ptr<LayerInfo> new_layer = std::shared_ptr<LayerInfo>(new LayerInfo());
         new_layer->type                      = LAYER_REFORMAT;
-        new_layer->type_str                  = "Reformat";
+        new_layer->type_str                  = "Int8Reformat";
         new_layer->name                      = name;
         ReformatLayerParam *param            = new ReformatLayerParam();
         new_layer->param                     = std::shared_ptr<LayerParam>(param);
@@ -70,10 +70,8 @@ namespace optimizer {
         }
 
         // only insert reformat before quantized layer now
-        auto quantize_layer = std::find_if(layers_orig.begin(), layers_orig.end(), [](std::shared_ptr<LayerInfo> iter) {
-            return iter->param->quantized == true;
-        });
-        if (quantize_layer == layers_orig.end()) {
+        auto is_quantized_net = GetQuantizedInfoFromNetStructure(structure);
+        if (!is_quantized_net) {
             return TNN_OK;
         }
 
@@ -93,11 +91,7 @@ namespace optimizer {
                     auto next_layer = layers_orig[next_id];
                     for (auto next_in : next_layer->inputs) {
                         if (next_in == cur_out && next_layer->param->quantized != cur_layer->param->quantized) {
-                            if (cur_layer->type == LAYER_REFORMAT || next_layer->type == LAYER_REFORMAT) {
-                                need_reformat = false;
-                            } else {
-                                need_reformat = true;
-                            }
+                            need_reformat = true;
                         }
                     }
                 }
