@@ -107,8 +107,8 @@ namespace optimizer {
             std::shared_ptr<LayerInfo> new_layer =
                 CreateReformat(cur_layer->name + reformat_name_suffix, cur_layer->param->quantized);
 
-            AdjustLayer(layers_orig, structure, cur_layer, new_layer,
-                        reformat_outs, reformat_name_suffix, index, count);
+            AdjustLayer(layers_orig, structure, cur_layer, new_layer, reformat_outs, reformat_name_suffix, index,
+                        count);
 
             LOGD("Insert int8 refomat layer: src %s dst %s\n", new_layer->inputs[0].c_str(), new_layer->outputs[0].c_str());
             layers_fused.push_back(new_layer);
@@ -122,10 +122,11 @@ namespace optimizer {
             std::vector<std::shared_ptr<LayerInfo>>& layers_orig,
             NetStructure *structure,
             std::shared_ptr<LayerInfo>& cur_layer,
-                                                 std::shared_ptr<LayerInfo> &new_layer,
-                                                 std::vector<std::string> &reformat_outs,
-                                                 const std::string &reformat_name_suffix, const int index,
-                                                 const int count) {
+            std::shared_ptr<LayerInfo>& new_layer,
+            std::vector<std::string>& reformat_outs,
+            const std::string& reformat_name_suffix,
+            const int index,
+            const int count) {
         // change blobs for unquantized layer for layers to read
         // int8resource correctly
         // src_type int8, change dst blob
