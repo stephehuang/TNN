@@ -12,7 +12,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-#include "tnn/optimizer/net_optimizer_insert_reformat.h"
+#include "tnn/optimizer/net_optimizer_insert_int8_reformat.h"
 
 #include <algorithm>
 #include <map>
@@ -110,7 +110,8 @@ namespace optimizer {
             AdjustLayer(layers_orig, structure, cur_layer, new_layer, reformat_outs, reformat_name_suffix, index,
                         count);
 
-            LOGD("Insert int8 refomat layer: src %s dst %s\n", new_layer->inputs[0].c_str(), new_layer->outputs[0].c_str());
+            LOGD("Insert int8 refomat layer: src %s dst %s\n", new_layer->inputs[0].c_str(),
+                 new_layer->outputs[0].c_str());
             layers_fused.push_back(new_layer);
         }
         structure->layers = layers_fused;
@@ -118,15 +119,12 @@ namespace optimizer {
         return TNN_OK;
     }
 
-    void NetOptimizerInsertInt8Reformat::AdjustLayer(
-            std::vector<std::shared_ptr<LayerInfo>>& layers_orig,
-            NetStructure *structure,
-            std::shared_ptr<LayerInfo>& cur_layer,
-            std::shared_ptr<LayerInfo>& new_layer,
-            std::vector<std::string>& reformat_outs,
-            const std::string& reformat_name_suffix,
-            const int index,
-            const int count) {
+    void NetOptimizerInsertInt8Reformat::AdjustLayer(std::vector<std::shared_ptr<LayerInfo>> &layers_orig,
+                                                     NetStructure *structure, std::shared_ptr<LayerInfo> &cur_layer,
+                                                     std::shared_ptr<LayerInfo> &new_layer,
+                                                     std::vector<std::string> &reformat_outs,
+                                                     const std::string &reformat_name_suffix, const int index,
+                                                     const int count) {
         // change blobs for unquantized layer for layers to read
         // int8resource correctly
         // src_type int8, change dst blob
