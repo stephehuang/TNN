@@ -45,7 +45,7 @@ namespace optimizer {
     static std::shared_ptr<LayerInfo> CreateReformat(std::string name, bool src_quantized) {
         std::shared_ptr<LayerInfo> new_layer = std::shared_ptr<LayerInfo>(new LayerInfo());
         new_layer->type                      = LAYER_REFORMAT;
-        new_layer->type_str                  = "Int8Reformat";
+        new_layer->type_str                  = "Reformat";
         new_layer->name                      = name;
         ReformatLayerParam *param            = new ReformatLayerParam();
         new_layer->param                     = std::shared_ptr<LayerParam>(param);
@@ -80,6 +80,9 @@ namespace optimizer {
         for (int index = 0; index < count; index++) {
             auto cur_layer = layers_orig[index];
             layers_fused.push_back(cur_layer);
+            if (cur_layer->type == LAYER_REFORMAT) {
+                continue;
+            }
 
             // find blobs need reformat
             // support multi inputs/outputs
@@ -89,6 +92,9 @@ namespace optimizer {
                 bool need_reformat = false;
                 for (int next_id = index + 1; next_id < count; next_id++) {
                     auto next_layer = layers_orig[next_id];
+                    if (next_layer->type == LAYER_REFORMAT) {
+                        continue;
+                    }
                     for (auto next_in : next_layer->inputs) {
                         if (next_in == cur_out && next_layer->param->quantized != cur_layer->param->quantized) {
                             need_reformat = true;
