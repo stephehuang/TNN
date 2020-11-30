@@ -166,6 +166,7 @@ __kernel void Conv2D1x1_S1_MIX_WB1_Local(GLOBAL_SIZE_2_DIMS __read_only image2d_
 
         const int out_x_base = mul24(output_c_block_idx, wh.x);
 
+        const int remain = wh.x - out_x_idx;
         int output_w_idx = out_x_base + out_x_idx;
         WI_F(output, (int2)(output_w_idx, bh_idx), local_output[local_id]);
     }
@@ -797,7 +798,6 @@ __kernel void Conv2D1x1GS3D_S1_CB2(
     int in_width2 = in_width0 + 2;
     int in_width3 = in_width0 + 3;
     int4 in_width = {in_width0, in_width1, in_width2, in_width3};
-    int4 is_w_in_boundary = in_width < wh.x;
     int4 weights_x_idx = {0, 1, 2, 3};
     int out_channel_block_idx_s1 = out_channel_block_idx + 1;
 
@@ -884,7 +884,6 @@ __kernel void Conv2D1x1GS3D_CB2(
     int in_width2 = in_width1 + stride_wh.x;
     int in_width3 = in_width2 + stride_wh.x;
     int4 in_width = {in_width0, in_width1, in_width2, in_width3};
-    int4 is_w_in_boundary = in_width < input_wh.x;
     int4 weights_x_idx = {0, 1, 2, 3};
 
     const int batch_idx     = mul24((output_bh_idx / output_wh.y), input_wh.y);
@@ -975,7 +974,6 @@ __kernel void Conv2DGS3D_CB2(
     int in_width1 = in_width0 + stride_wh.x;
     int in_width2 = in_width1 + stride_wh.x;
     int in_width3 = in_width2 + stride_wh.x;
-    int4 in_width = {in_width0, in_width1, in_width2, in_width3};
 
     const int height_start = mad24((output_bh_idx % output_wh.y), stride_wh.y, -padding_wh.y);
     int in_height_start = mad24(select(0, (-height_start + dilation_wh.y - 1) / dilation_wh.y, height_start < 0),
@@ -1086,7 +1084,6 @@ __kernel void Conv2D_CB2(
     int in_width1 = in_width0 + stride_wh.x;
     int in_width2 = in_width1 + stride_wh.x;
     int in_width3 = in_width2 + stride_wh.x;
-    int4 in_width = {in_width0, in_width1, in_width2, in_width3};
 
     const int height_start = mad24((output_bh_idx % output_wh.y), stride_wh.y, -padding_wh.y);
     int in_height_start = mad24(select(0, (-height_start + dilation_wh.y - 1) / dilation_wh.y, height_start < 0),
@@ -1198,7 +1195,6 @@ __kernel void Conv2D_MIX_CB2(
     int in_width1 = in_width0 + stride_wh.x;
     int in_width2 = in_width1 + stride_wh.x;
     int in_width3 = in_width2 + stride_wh.x;
-    int4 in_width = {in_width0, in_width1, in_width2, in_width3};
 
     const int height_start = mad24((output_bh_idx % output_wh.y), stride_wh.y, -padding_wh.y);
     int in_height_start = mad24(select(0, (-height_start + dilation_wh.y - 1) / dilation_wh.y, height_start < 0),
